@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bri4Dge: a world model that predicts video and metric 4D points, and lets a reasoning agent edit the predicted plan before the robot acts.">
+  <title>Bri4Dge: Bridging Agent Reasoning with World Model Prediction through 4D Point Steering</title>
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/site.css?v=63">
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Bri4Dge: Bridging Agent Reasoning with World Model Prediction through 4D Point Steering</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Anonymous authors</span>
+          </div>
+          <div class="is-size-6 publication-venue" style="margin:.2rem auto 0">Paper under review</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video class="teaser-video" autoplay muted loop playsinline src="./static/videos/teaser.mp4?v=63"></video>
+      <div class="pts-labels teaser-labels">
+        <span>Generated video</span>
+        <span>Generated 4D points</span>
+      </div>
+      <h2 class="subtitle has-text-centered tagline">
+        A world model predicts video and 4D points. An agent edits the points. The model regenerates the plan before the robot moves.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Video world models predict the consequences of robot actions, but their predictions are difficult to inspect and
+            correct through pixels alone. We present a world model that exposes its predicted future as metric 3D point
+            trajectories over time, i.e. 4D points, providing an editable geometric plan. The model jointly generates video and
+            point trajectories using a pretrained video diffusion transformer and decodes robot actions solely from the point
+            latent. A vision-language agent inspects the generated trajectories alongside current observations, identifies
+            anticipated task failures, and edits the relevant points. The world model then regenerates video and point
+            trajectories from the edited plan and decodes actions from the regenerated point latent. This connects geometric
+            corrections to both future prediction and action generation. In simulation, agent steering increases average
+            success from 20.8% to 47.5% on four FurnitureBench assembly tasks and from 7.7% to 27.4% on RoboCasa365 composite
+            tasks. These results show that an explicit metric plan lets agent reasoning correct anticipated failures before
+            execution, with the largest gains on long tasks whose later steps depend on earlier ones.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section is-light-band" id="world-model">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Video and 4D Point Generation</h2>
+    <div>
+      <p class="lead">
+      One model generates the video and the 4D points together. Actions are decoded from the points alone. Each clip follows a held-out demonstration for 3.2 seconds, all cameras.
+    </p>
+      <div class="picker group" data-picker="predbench"></div>
+      <div class="picker" data-picker="pred"></div>
+      <div class="stack">
+        <figure><span class="row-tag">Generated</span><video id="pred-video" autoplay muted loop playsinline></video></figure>
+      </div>
+      <div class="pts-pair">
+        <video id="pred-points" autoplay muted loop playsinline></video>
+        <div class="pts-labels one"><span>Generated 4D points</span></div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:#E07A33"></i>moving objects</span>
+        <span><i class="sw" style="background:#4F7CC4"></i>gripper</span>
+        <span><i class="sw" style="background:#57606A"></i>robot</span>
+        <span><i class="sw" style="background:#C9CED4"></i>static scene (as observed)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="steering">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Agent Steering</h2>
+
+    <h3 class="title is-4">Corrections</h3>
+    <p class="lead">
+      One agent call per example. Blue is the plan the model predicted. Orange is the plan after the agent's edit.
+    </p>
+    <div class="picker" data-picker="corr"></div>
+    <p class="lead edit-note" id="edit-note"></p>
+    <div class="stack">
+      <figure><span class="row-tag tag-blue">Predicted plan</span><video id="edit-before" autoplay muted loop playsinline></video></figure>
+      <figure><span class="row-tag tag-orange">After the edit</span><video id="edit-after" autoplay muted loop playsinline></video></figure>
+    </div>
+    <h4 class="mini-title">The 4D points around the edit, in close-up</h4>
+    <div class="pts-pair">
+      <video id="edit-closeup" autoplay muted loop playsinline></video>
+      <div class="pts-labels"><span>Front</span><span>Side</span></div>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:#4F7CC4"></i>predicted</span>
+      <span><i class="sw" style="background:#E07A33"></i>after the edit</span>
+      <span><i class="sw" style="background:#8C959F"></i>object</span>
+      <span><i class="sw" style="background:#C9CED4"></i>scene (as observed)</span>
+    </div>
+    <h4 class="mini-title">The whole scene</h4>
+    <div class="pts-pair">
+      <video id="edit-points" autoplay muted loop playsinline></video>
+      <div class="pts-labels"><span>Predicted plan</span><span>After the edit</span></div>
+    </div>
+
+    <h3 class="title is-4">Corrections in RoboCasa</h3>
+    <p class="lead">
+      The same agent steers a mobile manipulator in a kitchen. Both plans start from the same state.
+    </p>
+    <div class="picker" data-picker="rcedit"></div>
+    <p class="lead edit-note" id="rcedit-note"></p>
+    <div class="stack">
+      <figure><span class="row-tag tag-blue">Predicted plan</span><video id="rcedit-before" autoplay muted loop playsinline></video></figure>
+      <figure><span class="row-tag tag-orange">After the edit</span><video id="rcedit-after" autoplay muted loop playsinline></video></figure>
+    </div>
+    <div class="pts-pair">
+      <video id="rcedit-points" autoplay muted loop playsinline></video>
+      <div class="pts-labels"><span>Predicted plan</span><span>After the edit</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section is-light-band" id="ablation">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Why Edit Points?</h2>
+    <p class="lead">
+      <b>Editing the 4D plan and regenerating it works best.</b> It also needs <b>a tenth of the agent calls</b>.
+    </p>
+    <div class="chart-grid" id="ablation-charts"></div>
+    <table class="num-table">
+      <thead><tr><th>Variant</th><th>Agent calls per episode</th></tr></thead>
+      <tbody>
+        <tr><th>Image space (video → actions)</th><td>210.6</td></tr>
+        <tr><th>Best-of-10 generations</th><td>230.4</td></tr>
+        <tr><th>Edit, no regeneration</th><td>26.9</td></tr>
+        <tr class="ours"><th>Edit + regenerate (ours)</th><td>22.3</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="results">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Closed-Loop Results</h2>
+
+    <h3 class="title is-4">Success rate</h3>
+    <p class="lead">
+      30 trials per task. Steering helps most on long tasks.
+    </p>
+    <div class="chart-grid" id="success-charts"></div>
+    <div class="legend">
+      <span><i class="sw" style="background:#4F7CC4"></i>Ours (world model alone)</span>
+      <span><i class="sw" style="background:#E07A33"></i>Ours + agent</span>
+    </div>
+    <details class="table-view">
+      <summary>All methods as a table</summary>
+      <table class="num-table">
+        <thead><tr><th>FurnitureBench</th><th>one_leg</th><th>lamp</th><th>round_table</th><th>square_table</th><th>Avg.</th></tr></thead>
+        <tbody>
+          <tr><th>LingBot-VA</th><td>20.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>5.0</td></tr>
+          <tr><th>π0.5</th><td>60.0</td><td>16.7</td><td>10.0</td><td>10.0</td><td>24.2</td></tr>
+          <tr><th>Ours</th><td>63.3</td><td>3.3</td><td>10.0</td><td>6.7</td><td>20.8</td></tr>
+          <tr><th>Ours + agent</th><td>70.0</td><td>40.0</td><td>43.3</td><td>36.7</td><td>47.5</td></tr>
+        </tbody>
+      </table>
+      <table class="num-table">
+        <thead><tr><th>RoboCasa365</th><th>Diffusion Policy</th><th>π0</th><th>π0.5</th><th>GigaWorld-Policy</th><th>GR00T N1.5</th><th>Ours</th><th>Ours + agent</th></tr></thead>
+        <tbody>
+          <tr><th>Atomic (18 tasks)</th><td>15.7</td><td>34.6</td><td>39.6</td><td>44.4</td><td>50.7</td><td>38.7</td><td>46.5</td></tr>
+          <tr><th>Composite (16 tasks)</th><td>0.2</td><td>6.1</td><td>7.1</td><td>11.8</td><td>14.8</td><td>7.7</td><td>27.4</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <h3 class="title is-4">How far each episode gets</h3>
+    <p class="lead">
+      Share of episodes that reach each step, in order.
+    </p>
+    <div class="picker" data-picker="funnel"></div>
+    <div class="chart-grid one" id="funnel-chart"></div>
+
+  </div>
+</section>
+
+<section class="section is-light-band" id="real-world">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Real World</h2>
+    <p class="lead">
+      The world model alone controls a bimanual robot, closed loop. No agent. 20 trials per task.
+    </p>
+    <div class="chart-grid one" id="real-chart"></div>
+    <h3 class="title is-4">Predictions on a successful run</h3>
+    <p class="lead">
+      This is the robot's top-camera video with the model's predicted points drawn on top of it. The dots mark where the model expects the grippers and the objects to be at each moment, and the lines trace where it expects them to go over the next 1.2 seconds, with a new prediction made every 0.8 seconds.
+    </p>
+    <div class="picker" data-picker="robot"></div>
+    <div class="stack">
+      <figure><span class="row-tag">Robot run + predicted points</span><video id="robot-video" autoplay muted loop playsinline></video></figure>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:#E07A33"></i>predicted scene points that move</span>
+      <span><i class="sw" style="background:#4F7CC4"></i>predicted grippers</span>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>
+            This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>. It borrows the source code of the
+            <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> project page.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div id="tip" role="status"></div>
+<script defer src="./static/js/fontawesome.all.min.js"></script>
+<script src="./static/js/site.js?v=63"></script>
+</body>
+</html>
